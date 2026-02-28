@@ -2,6 +2,17 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## 作業ルール（必須）
+
+### チケット・TODO の更新
+タスクを実装・完了したら、**必ず以下を更新すること**：
+
+1. **該当チケットファイル** (`docs/00X-*.md`) の完了項目を `[ ]` → `[x]` に変更
+2. **チケットの状態** (`**状態**: []`) を実態に合わせて更新（例: `[完了]`, `[進行中]`, `[動作確認待ち]`）
+3. **`docs/000-index.md`** の該当チケットのステータスを更新
+
+> タスク完了後にチケット更新を忘れないこと。実装と同じタイミングで必ず行う。
+
 ## Commands
 
 ```bash
@@ -86,14 +97,15 @@ export async function createClient() {
 }
 ```
 
-### `middleware.ts`（プロジェクトルート）
-Server Componentはクッキーを書き込めないため、middlewareでトークンリフレッシュを行う。
+### `proxy.ts`（プロジェクトルート）
+Next.js 16 では `middleware.ts` が廃止され `proxy.ts` / `proxy` 関数に変更された。
+Server Componentはクッキーを書き込めないため、proxyでトークンリフレッシュを行う。
 
 ```typescript
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(
@@ -215,7 +227,7 @@ export async function GET(request: Request) {
 ### Routing & Layout
 - 共通UIは `layout.tsx` に配置してネストを活用する。
 - ローディング状態は `loading.tsx`、エラー状態は `error.tsx` をセグメントごとに作成する。
-- 認証ガードは `middleware.ts`（プロジェクトルート）で実装し、`matcher` で保護対象ルートを指定する。
+- 認証ガードは `proxy.ts`（プロジェクトルート）で実装し、`matcher` で保護対象ルートを指定する。（Next.js 16 で `middleware.ts` から改名）
 - 管理者ガードはmiddlewareまたは各`layout.tsx`でセッションの`is_admin`を確認してリダイレクトする。
 
 ### File & Folder Conventions
@@ -239,7 +251,7 @@ lib/
   supabase/
     client.ts         # ブラウザ用クライアント (createBrowserClient)
     server.ts         # サーバー用クライアント (createServerClient)
-middleware.ts         # 認証ガード
+proxy.ts              # 認証ガード（Next.js 16: middleware.ts から改名）
 ```
 
 ### Metadata
@@ -265,12 +277,13 @@ YouTube動画をUdemyライクなプラットフォームで配信するサー�
 ### Environment Variables (`.env.local`)
 ```
 NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 ```
+> 新形式のキー（`sb_publishable_xxx`）を使用。
 
 ### Key Libraries
 - `@supabase/supabase-js` — Supabaseクライアント
-- `@supabase/auth-helpers-nextjs` — Next.js用認証ヘルパー
+- `@supabase/ssr` — Next.js App Router用SSRヘルパー
 - `react-youtube` または YouTube IFrame API — 動画埋め込み
 
 ---
@@ -280,12 +293,12 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
 ### `users`
 | column | type | notes |
 |---|---|---|
-| id | UUID PK | Supabase Authと連携 |
-| email | String | Googleアカウントのメール |
-| name | String | Googleアカウントの表示名 |
-| avatar_url | String | Googleプロフィール画像 |
-| is_admin | Boolean | default: false |
-| created_at | Timestamp | |
+| id | UUID PK | Supabase Authと連携（`auth.users.id` FK） |
+| avatar_url | Text | Googleプロフィール画像URL |
+| is_admin | Boolean NOT NULL | default: false |
+| created_at | Timestamptz | |
+
+> **注意**: `email` / `name` は `public.users` に保存しない。これらが必要な場合はサーバー側で `auth.users` の `email` / `raw_user_meta_data->>'full_name'` から取得する（セキュリティ対策）。
 
 ### `videos`
 | column | type | notes |
@@ -314,8 +327,45 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
 | UNIQUE | (user_id, video_id) | |
 
 ### RLS Policies
-- `videos`: SELECT → 認証済み全員、INSERT/UPDATE/DELETE → 管理者のみ
-- `progress`: 全操作 → 自分のレコードのみ
+
+すべてのテーブルで RLS を有効化済み（`ALTER TABLE ... ENABLE ROW LEVEL SECURITY`）。
+
+#### `users`
+| policy | operation | 条件 |
+|---|---|---|
+| `users_select_own` | SELECT | 自分のレコードのみ（`auth.uid() = id`） |
+| `users_update_own` | UPDATE | 自分のレコードのみ、かつ `is_admin` の変更不可 |
+| `users_select_admin` | SELECT | 管理者は全ユーザーを読み取り可 |
+
+> `is_admin` はユーザー自身では変更不可。昇格はDB直接操作のみ。
+
+#### `videos`
+| policy | operation | 条件 |
+|---|---|---|
+| `videos_select_authenticated` | SELECT | 認証済みユーザー全員 |
+| `videos_insert_admin` | INSERT | 管理者のみ |
+| `videos_update_admin` | UPDATE | 管理者のみ |
+| `videos_delete_admin` | DELETE | 管理者のみ |
+
+#### `progress`
+| policy | operation | 条件 |
+|---|---|---|
+| `progress_select_own` | SELECT | 自分のレコードのみ |
+| `progress_insert_own` | INSERT | 自分のレコードのみ |
+| `progress_update_own` | UPDATE | 自分のレコードのみ |
+| `progress_delete_own` | DELETE | 自分のレコードのみ |
+
+### DB 関数・トリガー
+
+| 名前 | 種類 | 説明 |
+|---|---|---|
+| `public.set_updated_at()` | Function | `updated_at` を自動更新（`videos` / `progress`） |
+| `public.handle_new_user()` | Function | 新規サインアップ時に `public.users` へ自動挿入（`id` / `avatar_url` のみ、`SECURITY DEFINER`） |
+| `videos_set_updated_at` | Trigger | `videos` の UPDATE 前に実行 |
+| `progress_set_updated_at` | Trigger | `progress` の UPDATE 前に実行 |
+| `on_auth_user_created` | Trigger | `auth.users` INSERT 後に `handle_new_user()` を実行 |
+
+> 関数はすべて `SET search_path = ''` で固定済み（search_path インジェクション対策）。
 
 ---
 
@@ -339,7 +389,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
 ## MVP Development Phases
 
 ### Phase 1（最優先）
-1. Supabaseプロジェクトセットアップ + テーブル作成 + RLS設定
+1. ~~Supabaseプロジェクトセットアップ + テーブル作成 + RLS設定~~ **完了**
 2. Google OAuth設定（Google Cloud Console + Supabase Auth）
 3. 認証フロー実装（ログイン・ログアウト・ルートガード）
 4. 基本レイアウト

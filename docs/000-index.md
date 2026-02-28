@@ -9,21 +9,21 @@
 
 | No | チケット | 状態 |
 |---|---|---|
-| [001](./001-supabase-setup.md) | Supabase プロジェクトセットアップ・DB・RLS | [] |
-| [002](./002-google-oauth.md) | Google OAuth 設定 | [] |
-| [003](./003-auth-flow.md) | 認証フロー実装（ログイン・ログアウト・ルートガード） | [] |
-| [004](./004-base-layout.md) | 基本レイアウト・ヘッダー | [] |
+| [001](./001-supabase-setup.md) | Supabase プロジェクトセットアップ・DB・RLS | [×] |
+| [002](./002-google-oauth.md) | Google OAuth 設定 | [×] |
+| [003](./003-auth-flow.md) | 認証フロー実装（ログイン・ログアウト・ルートガード） | [×] |
+| [004](./004-base-layout.md) | 基本レイアウト・ヘッダー | [×] |
 
 ## Phase 2 — 動画閲覧
 
 | No | チケット | 状態 |
 |---|---|---|
-| [005](./005-video-list.md) | 動画リスト画面 | [] |
-| [006](./006-video-player.md) | YouTube 埋め込み再生画面 | [] |
+| [005](./005-video-list.md) | 動画リスト画面 | [×] |
+| [006](./006-video-player.md) | YouTube 埋め込み再生画面 | [×] |
 
 ## Phase 3 — 進捗管理・管理機能
 
 | No | チケット | 状態 |
 |---|---|---|
-| [007](./007-progress-tracking.md) | 視聴進捗記録機能 | [] |
-| [008](./008-admin.md) | 管理画面（動画 CRUD・サムネイルアップロード） | [] |
+| [007](./007-progress-tracking.md) | 視聴進捗記録機能 | [×] |
+| [008](./008-admin.md) | 管理画面（動画 CRUD・サムネイルアップロード） | [×] |

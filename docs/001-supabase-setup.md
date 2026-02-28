@@ -1,7 +1,7 @@
 # 001 — Supabase プロジェクトセットアップ・DB・RLS
 
 **Phase**: 1
-**状態**: []
+**状態**: [完了]
 
 ## 概要
 Supabase プロジェクトを作成し、DB テーブルと RLS ポリシーを設定する。
@@ -12,45 +12,44 @@ Supabase プロジェクトを作成し、DB テーブルと RLS ポリシーを
 ## TODO
 
 ### プロジェクト作成・環境変数
-- [ ] [database.new](https://database.new) で Supabase プロジェクトを作成
-- [ ] `NEXT_PUBLIC_SUPABASE_URL` と `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` を取得
-- [ ] `.env.local` を作成して環境変数を設定
-- [ ] `@supabase/supabase-js` と `@supabase/ssr` をインストール
+- [x] [database.new](https://database.new) で Supabase プロジェクトを作成
+- [x] `NEXT_PUBLIC_SUPABASE_URL` と `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` を取得
+- [x] `.env.local` を作成して環境変数を設定
+- [x] `@supabase/supabase-js` と `@supabase/ssr` をインストール
 
 ```bash
 npm install @supabase/supabase-js @supabase/ssr
 ```
 
 ### `users` テーブル作成
-- [ ] Supabase SQL Editor で `users` テーブルを作成
+- [x] Supabase SQL Editor で `users` テーブルを作成
 
 ```sql
 create table public.users (
   id uuid references auth.users on delete cascade primary key,
-  email text,
-  name text,
   avatar_url text,
-  is_admin boolean default false,
+  is_admin boolean not null default false,
   created_at timestamp with time zone default now()
 );
 ```
+> **注意**: `email` / `name` は保存しない。必要な場合はサーバー側で `auth.users` から取得する（セキュリティ対策）。
 
-- [ ] ログイン時に `users` テーブルへ自動挿入する Function + Trigger を作成
+- [x] ログイン時に `users` テーブルへ自動挿入する Function + Trigger を作成
 
 ```sql
 create or replace function public.handle_new_user()
 returns trigger as $$
 begin
-  insert into public.users (id, email, name, avatar_url)
+  insert into public.users (id, avatar_url)
   values (
     new.id,
-    new.email,
-    new.raw_user_meta_data->>'full_name',
     new.raw_user_meta_data->>'avatar_url'
   );
   return new;
 end;
-$$ language plpgsql security definer;
+$$ language plpgsql security definer set search_path = '';
+```
+> **注意**: `name` も保存しない。表示名が必要な場合は `auth.users.raw_user_meta_data->>'full_name'` からサーバー側で取得する。
 
 create trigger on_auth_user_created
   after insert on auth.users
@@ -58,7 +57,7 @@ create trigger on_auth_user_created
 ```
 
 ### `videos` テーブル作成
-- [ ] `videos` テーブルを作成
+- [x] `videos` テーブルを作成
 
 ```sql
 create table public.videos (
@@ -78,7 +77,7 @@ create table public.videos (
 ```
 
 ### `progress` テーブル作成
-- [ ] `progress` テーブルを作成
+- [x] `progress` テーブルを作成
 
 ```sql
 create table public.progress (
@@ -94,7 +93,7 @@ create table public.progress (
 ```
 
 ### RLS ポリシー設定
-- [ ] 全テーブルで RLS を有効化
+- [x] 全テーブルで RLS を有効化
 
 ```sql
 alter table public.users enable row level security;
@@ -102,7 +101,7 @@ alter table public.videos enable row level security;
 alter table public.progress enable row level security;
 ```
 
-- [ ] `users` テーブルのポリシー設定
+- [x] `users` テーブルのポリシー設定
 
 ```sql
 -- 自分のデータのみ参照・更新可能
@@ -110,7 +109,7 @@ create policy "users: select own" on public.users for select using (auth.uid() =
 create policy "users: update own" on public.users for update using (auth.uid() = id);
 ```
 
-- [ ] `videos` テーブルのポリシー設定
+- [x] `videos` テーブルのポリシー設定
 
 ```sql
 -- 認証済みユーザー全員が読み取り可能
@@ -128,7 +127,7 @@ create policy "videos: delete admin" on public.videos
   for delete using ((select is_admin from public.users where id = auth.uid()));
 ```
 
-- [ ] `progress` テーブルのポリシー設定
+- [x] `progress` テーブルのポリシー設定
 
 ```sql
 -- 自分のデータのみ操作可能
@@ -139,8 +138,8 @@ create policy "progress: delete own" on public.progress for delete using (auth.u
 ```
 
 ### Supabase Storage 設定
-- [ ] サムネイル用の Storage バケット `thumbnails` を作成（public）
-- [ ] バケットのポリシーを設定（管理者のみアップロード可、全員が読み取り可）
+- [x] サムネイル用の Storage バケット `thumbnails` を作成（public）
+- [x] バケットのポリシーを設定（管理者のみアップロード可、全員が読み取り可）
 
 ---
 

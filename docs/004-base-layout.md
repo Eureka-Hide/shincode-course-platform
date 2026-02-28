@@ -1,7 +1,7 @@
 # 004 — 基本レイアウト・ヘッダー
 
 **Phase**: 1
-**状態**: []
+**状態**: [完了]
 **依存**: 003
 
 ## 概要
@@ -13,26 +13,26 @@
 ## TODO
 
 ### ルートレイアウト更新
-- [ ] `app/layout.tsx` のメタデータを更新
+- [x] `app/layout.tsx` のメタデータを更新
   - `title`: サービス名に変更
   - `description`: サービス説明に変更
 
 ### ヘッダーコンポーネント作成
-- [ ] `app/components/Header.tsx` を作成（Server Component）
+- [x] `app/components/Header.tsx` を作成（Server Component）
   - Supabase からログインユーザー情報を取得（`getUser()`）
   - ユーザーのアバター画像（`next/image`）と名前を表示
   - ログアウトボタン（`signOut` Server Action を呼び出す）
   - `is_admin` が `true` の場合のみ「管理画面」リンクを表示
 
 ### 認証済みレイアウト
-- [ ] `app/(auth)/layout.tsx` を作成（Route Group で認証済みページ共通レイアウト）
+- [x] `app/(auth)/layout.tsx` を作成（Route Group で認証済みページ共通レイアウト）
   - Header コンポーネントを配置
   - メインコンテンツ領域のラッパーを定義
-- [ ] `app/(auth)/page.tsx` としてホームページを移動（または `app/page.tsx` を維持）
+- [x] `app/(auth)/page.tsx` としてホームページを移動（`app/page.tsx` は削除）
 
 ### スタイル調整
-- [ ] Tailwind でヘッダーのスタイルを実装（高さ、背景色、レスポンシブ対応）
-- [ ] メインコンテンツ領域の最大幅・パディングを設定
+- [x] Tailwind でヘッダーのスタイルを実装（高さ、背景色、レスポンシブ対応）
+- [x] メインコンテンツ領域の最大幅・パディングを設定
 
 ---
 

@@ -1,7 +1,7 @@
 # 003 — 認証フロー実装（ログイン・ログアウト・ルートガード）
 
 **Phase**: 1
-**状態**: []
+**状態**: [完了]
 **依存**: 001, 002
 
 ## 概要
@@ -12,7 +12,7 @@ Supabase Auth を使った Google OAuth ログイン・ログアウト・認証�
 ## TODO
 
 ### Supabase クライアント作成
-- [ ] `lib/supabase/client.ts` を作成（ブラウザ用）
+- [x] `lib/supabase/client.ts` を作成（ブラウザ用）
 
 ```typescript
 import { createBrowserClient } from '@supabase/ssr'
@@ -25,7 +25,7 @@ export function createClient() {
 }
 ```
 
-- [ ] `lib/supabase/server.ts` を作成（Server Component / Server Actions 用）
+- [x] `lib/supabase/server.ts` を作成（Server Component / Server Actions 用）
 
 ```typescript
 import { createServerClient } from '@supabase/ssr'
@@ -52,38 +52,38 @@ export async function createClient() {
 }
 ```
 
-### Middleware（認証ガード）
-- [ ] `middleware.ts` をプロジェクトルートに作成
+### Proxy（認証ガード）
+- [x] `proxy.ts` をプロジェクトルートに作成（Next.js 16: `middleware.ts` → `proxy.ts` / `proxy()` に改名）
   - 未認証ユーザーを `/login` にリダイレクト
   - 認証済みユーザーが `/login` にアクセスしたら `/` にリダイレクト
   - トークンリフレッシュ処理を含める
   - `matcher` で静的ファイルを除外
 
 ### Server Actions（認証）
-- [ ] `app/actions/auth.ts` を作成
+- [x] `app/actions/auth.ts` を作成
   - `signInWithGoogle()`: Google OAuth でログイン開始
   - `signOut()`: ログアウトして `/login` へリダイレクト
 
 ### ルート・ページ実装
-- [ ] `app/login/page.tsx` を作成
+- [x] `app/login/page.tsx` を作成
   - 「Google でログイン」ボタンを配置
   - 認証済みの場合は `/` にリダイレクト（Server Component で `getUser()` 確認）
-- [ ] `app/auth/callback/route.ts` を作成
+- [x] `app/auth/callback/route.ts` を作成
   - `code` を受け取り `exchangeCodeForSession()` でセッションを確立
   - 完了後 `/` へリダイレクト
 
 ### 動作確認
-- [ ] ローカルで Google ログインが成功する
-- [ ] ログイン後に `users` テーブルへ自動でレコードが挿入される（Trigger 動作確認）
-- [ ] ログアウトが機能し `/login` へ遷移する
-- [ ] 未ログイン状態で `/` にアクセスすると `/login` へリダイレクトされる
+- [x] ローカルで Google ログインが成功する
+- [x] ログイン後に `users` テーブルへ自動でレコードが挿入される（Trigger 動作確認）
+- [x] ログアウトが機能し `/login` へ遷移する
+- [x] 未ログイン状態で `/` にアクセスすると `/login` へリダイレクトされる
 
 ---
 
 ## 関連ファイル
 - `lib/supabase/client.ts`
 - `lib/supabase/server.ts`
-- `middleware.ts`
+- `proxy.ts`
 - `app/login/page.tsx`
 - `app/actions/auth.ts`
 - `app/auth/callback/route.ts`
