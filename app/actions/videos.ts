@@ -102,7 +102,25 @@ export async function updateVideo(id: string, formData: FormData) {
 
 export async function deleteVideo(id: string) {
   const supabase = await requireAdmin()
+
+  // サムネイルパスを取得
+  const { data: video } = await supabase
+    .from('videos')
+    .select('thumbnail_url')
+    .eq('id', id)
+    .single()
+
+  // DBレコード削除
   await supabase.from('videos').delete().eq('id', id)
+
+  // Storageからサムネイル削除
+  if (video?.thumbnail_url) {
+    const pathParts = video.thumbnail_url.split('/thumbnails/')
+    if (pathParts.length > 1) {
+      await supabase.storage.from('thumbnails').remove([pathParts[1]])
+    }
+  }
+
   revalidatePath('/')
   revalidatePath('/admin')
 }
